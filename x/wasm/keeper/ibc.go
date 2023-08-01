@@ -32,16 +32,26 @@ func (k Keeper) ensureIbcPort(ctx sdk.Context, contractAddr sdk.AccAddress) (str
 }
 
 const portIDPrefix = "wasm."
+const cndIDPrefix = "did:com:"
+const cndIDPrefixTranslation = "did.com."
 
 func PortIDForContract(addr sdk.AccAddress) string {
-	return portIDPrefix + addr.String()
+	addrStr := addr.String()
+	if strings.HasPrefix(addrStr, cndIDPrefix) {
+		addrStr = cndIDPrefixTranslation + addrStr[len(cndIDPrefix):]
+	}
+	return portIDPrefix + addrStr
 }
 
 func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	if !strings.HasPrefix(portID, portIDPrefix) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "without prefix")
 	}
-	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
+	portIDaddr := portID[len(portIDPrefix):]
+	if strings.HasPrefix(portIDaddr, cndIDPrefixTranslation) {
+		portIDaddr = cndIDPrefix + portIDaddr[len(cndIDPrefixTranslation):]
+	}
+	return sdk.AccAddressFromBech32(portIDaddr)
 }
 
 // AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
