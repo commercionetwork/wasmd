@@ -115,6 +115,12 @@ func (k Keeper) getInstantiateAccessConfig(ctx sdk.Context) types.AccessType {
 	return a
 }
 
+func (k Keeper) getBach32IbcPortTranslate(ctx sdk.Context) []string {
+	var a []string
+	k.paramSpace.Get(ctx, types.ParamStoreKeyBach32IbcPortTranslate, &a)
+	return a
+}
+
 // GetParams returns the total set of wasm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	var params types.Params

@@ -34,7 +34,10 @@ func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, example.Contract, addr)
 
-	portID2 := PortIDForContract(addr)
+	/* ====================================== */
+	// It needs to test with trnslation
+	portID2 := PortIDForContract(addr, nil)
+	/* ====================================== */
 	owner, _, err = keepers.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, portID2)
 	require.NoError(t, err)
 	require.Equal(t, "wasm", owner)
@@ -70,7 +73,10 @@ func TestContractFromPortID(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gotAddr, gotErr := ContractFromPortID(spec.srcPort)
+			/* ====================================== */
+			// It needs to test with trnslation
+			gotAddr, gotErr := ContractFromPortID(spec.srcPort, nil)
+			/* ====================================== */
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return

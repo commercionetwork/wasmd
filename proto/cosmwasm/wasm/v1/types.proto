@@ -57,6 +57,9 @@ message Params {
   ];
   AccessType instantiate_default_permission = 2
       [ (gogoproto.moretags) = "yaml:\"instantiate_default_permission\"" ];
+  repeated string    bach32_ibc_port_translate = 3
+      [ (gogoproto.moretags) = "yaml:\"bach32_ibc_port_translate\"" ];
+
 }
 
 // CodeInfo is data for the uploaded contract WASM code

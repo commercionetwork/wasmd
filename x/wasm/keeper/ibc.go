@@ -24,7 +24,8 @@ func (k Keeper) bindIbcPort(ctx sdk.Context, portID string) error {
 // Returns success if we already registered or just registered and error if we cannot
 // (lack of permissions or someone else has it)
 func (k Keeper) ensureIbcPort(ctx sdk.Context, contractAddr sdk.AccAddress) (string, error) {
-	portID := PortIDForContract(contractAddr)
+	translate := k.getBach32IbcPortTranslate(ctx)
+	portID := PortIDForContract(contractAddr, translate)
 	if _, ok := k.capabilityKeeper.GetCapability(ctx, host.PortPath(portID)); ok {
 		return portID, nil
 	}
@@ -33,15 +34,27 @@ func (k Keeper) ensureIbcPort(ctx sdk.Context, contractAddr sdk.AccAddress) (str
 
 const portIDPrefix = "wasm."
 
-func PortIDForContract(addr sdk.AccAddress) string {
-	return portIDPrefix + addr.String()
+func PortIDForContract(addr sdk.AccAddress, translate []string) string {
+	translateAddr := addr.String()
+	if translate != nil && len(translate) != 0 {
+		for i, t := range translate[0] {
+			translateAddr = strings.Replace(translateAddr, string(t), string(translate[1][i]), -1)
+		}
+	}
+	return portIDPrefix + translateAddr
 }
 
-func ContractFromPortID(portID string) (sdk.AccAddress, error) {
+func ContractFromPortID(portID string, translate []string) (sdk.AccAddress, error) {
 	if !strings.HasPrefix(portID, portIDPrefix) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "without prefix")
 	}
-	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
+	translateAddr := portID[len(portIDPrefix):]
+	if translate != nil && len(translate) != 0 {
+		for i, t := range translate[1] {
+			translateAddr = strings.Replace(translateAddr, string(t), string(translate[0][i]), -1)
+		}
+	}
+	return sdk.AccAddressFromBech32(translateAddr)
 }
 
 // AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function

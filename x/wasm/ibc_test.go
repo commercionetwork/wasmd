@@ -107,7 +107,7 @@ func TestOnRecvPacket(t *testing.T) {
 					return spec.contractRsp, spec.contractOkMsgExecErr
 				},
 			}
-			h := NewIBCHandler(mock, nil, nil)
+			h := NewIBCHandler(mock, nil, nil, nil)
 			em := &sdk.EventManager{}
 			ctx := sdk.Context{}.WithEventManager(em)
 			if spec.expPanic {

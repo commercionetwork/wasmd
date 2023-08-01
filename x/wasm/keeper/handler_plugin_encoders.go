@@ -286,7 +286,12 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 		switch {
 		case msg.CloseChannel != nil:
 			return []sdk.Msg{&channeltypes.MsgChannelCloseInit{
-				PortId:    PortIDForContract(sender),
+				/* ====================== ERROR ======================
+				*  This is a hack to make the contract able to close
+				*  a channel. The PortID needs to be translated
+				====================================================*/
+				PortId: PortIDForContract(sender, nil),
+				/* ====================== ERROR ======================*/
 				ChannelId: msg.CloseChannel.ChannelID,
 				Signer:    sender.String(),
 			}}, nil

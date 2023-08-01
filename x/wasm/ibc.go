@@ -27,10 +27,11 @@ type IBCHandler struct {
 	keeper           types.IBCContractKeeper
 	channelKeeper    types.ChannelKeeper
 	appVersionGetter appVersionGetter
+	viewKeeper       types.ViewKeeper
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, vg appVersionGetter) IBCHandler {
-	return IBCHandler{keeper: k, channelKeeper: ck, appVersionGetter: vg}
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, vg appVersionGetter, vk types.ViewKeeper) IBCHandler {
+	return IBCHandler{keeper: k, channelKeeper: ck, appVersionGetter: vg, viewKeeper: vk}
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -44,11 +45,12 @@ func (i IBCHandler) OnChanOpenInit(
 	counterParty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
+	params := i.viewKeeper.GetParams(ctx)
 	// ensure port, version, capability
 	if err := ValidateChannelParams(channelID); err != nil {
 		return "", err
 	}
-	contractAddr, err := ContractFromPortID(portID)
+	contractAddr, err := ContractFromPortID(portID, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return "", sdkerrors.Wrapf(err, "contract port id")
 	}
@@ -92,12 +94,13 @@ func (i IBCHandler) OnChanOpenTry(
 	counterParty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
+	params := i.viewKeeper.GetParams(ctx)
 	// ensure port, version, capability
 	if err := ValidateChannelParams(channelID); err != nil {
 		return "", err
 	}
 
-	contractAddr, err := ContractFromPortID(portID)
+	contractAddr, err := ContractFromPortID(portID, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return "", sdkerrors.Wrapf(err, "contract port id")
 	}
@@ -145,7 +148,8 @@ func (i IBCHandler) OnChanOpenAck(
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
-	contractAddr, err := ContractFromPortID(portID)
+	params := i.viewKeeper.GetParams(ctx)
+	contractAddr, err := ContractFromPortID(portID, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
@@ -171,7 +175,8 @@ func (i IBCHandler) OnChanOpenAck(
 
 // OnChanOpenConfirm implements the IBCModule interface
 func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string) error {
-	contractAddr, err := ContractFromPortID(portID)
+	params := i.viewKeeper.GetParams(ctx)
+	contractAddr, err := ContractFromPortID(portID, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
@@ -193,7 +198,8 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 
 // OnChanCloseInit implements the IBCModule interface
 func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) error {
-	contractAddr, err := ContractFromPortID(portID)
+	params := i.viewKeeper.GetParams(ctx)
+	contractAddr, err := ContractFromPortID(portID, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
@@ -221,7 +227,8 @@ func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) e
 // OnChanCloseConfirm implements the IBCModule interface
 func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string) error {
 	// counterparty has closed the channel
-	contractAddr, err := ContractFromPortID(portID)
+	params := i.viewKeeper.GetParams(ctx)
+	contractAddr, err := ContractFromPortID(portID, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
@@ -262,7 +269,8 @@ func (i IBCHandler) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	contractAddr, err := ContractFromPortID(packet.DestinationPort)
+	params := i.viewKeeper.GetParams(ctx)
+	contractAddr, err := ContractFromPortID(packet.DestinationPort, params.Bach32IbcPortTranslate)
 	if err != nil {
 		// this must not happen as ports were registered before
 		panic(sdkerrors.Wrapf(err, "contract port id"))
@@ -290,7 +298,8 @@ func (i IBCHandler) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	contractAddr, err := ContractFromPortID(packet.SourcePort)
+	params := i.viewKeeper.GetParams(ctx)
+	contractAddr, err := ContractFromPortID(packet.SourcePort, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
@@ -308,7 +317,8 @@ func (i IBCHandler) OnAcknowledgementPacket(
 
 // OnTimeoutPacket implements the IBCModule interface
 func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
-	contractAddr, err := ContractFromPortID(packet.SourcePort)
+	params := i.viewKeeper.GetParams(ctx)
+	contractAddr, err := ContractFromPortID(packet.SourcePort, params.Bach32IbcPortTranslate)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}

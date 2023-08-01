@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,8 +14,9 @@ import (
 )
 
 var (
-	ParamStoreKeyUploadAccess      = []byte("uploadAccess")
-	ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
+	ParamStoreKeyUploadAccess           = []byte("uploadAccess")
+	ParamStoreKeyInstantiateAccess      = []byte("instantiateAccess")
+	ParamStoreKeyBach32IbcPortTranslate = []byte("bach32IbcPort")
 )
 
 var AllAccessTypes = []AccessType{
@@ -108,6 +110,7 @@ func DefaultParams() Params {
 	return Params{
 		CodeUploadAccess:             AllowEverybody,
 		InstantiateDefaultPermission: AccessTypeEverybody,
+		Bach32IbcPortTranslate:       nil,
 	}
 }
 
@@ -124,6 +127,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamStoreKeyUploadAccess, &p.CodeUploadAccess, validateAccessConfig),
 		paramtypes.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.InstantiateDefaultPermission, validateAccessType),
+		paramtypes.NewParamSetPair(ParamStoreKeyBach32IbcPortTranslate, &p.Bach32IbcPortTranslate, validateBach32IbcPortTranslate),
 	}
 }
 
@@ -134,6 +138,9 @@ func (p Params) ValidateBasic() error {
 	}
 	if err := validateAccessConfig(p.CodeUploadAccess); err != nil {
 		return errors.Wrap(err, "upload access")
+	}
+	if err := validateBach32IbcPortTranslate(p.Bach32IbcPortTranslate); err != nil {
+		return errors.Wrap(err, "translate")
 	}
 	return nil
 }
@@ -160,6 +167,82 @@ func validateAccessType(i interface{}) error {
 		}
 	}
 	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a)
+}
+
+// IsValidID defines regular expression to check if the string consist of
+// characters in one of the following categories only:
+// - Alphanumeric
+// - `.`, `_`, `+`, `-`, `#`
+// - `[`, `]`, `<`, `>`
+var IsValid024 = regexp.MustCompile(`^[a-zA-Z0-9\.\_\+\-\#\[\]\<\>]+$`).MatchString
+var IsReverseValid024 = regexp.MustCompile(`^[\.\_\+\-\#\[\]\<\>]+$`).MatchString
+
+// ICS 024 Identifier and Path Validation Implementation
+//
+// This file defines ValidateFn to validate identifier and path strings
+// The spec for ICS 024 can be located here:
+// https://github.com/cosmos/ibc/tree/master/spec/core/ics-024-host-requirements
+
+func ics024TargetTrValidator(trg_tr string) error {
+	// valid string must contain only 024 special valid characters
+	if !IsValid024(trg_tr) {
+		return sdkerrors.Wrapf(
+			ErrInvalid,
+			"string %s must contain only alphanumeric or the following characters: '.', '_', '+', '-', '#', '[', ']', '<', '>'",
+			trg_tr,
+		)
+	}
+	return nil
+}
+
+func ics024SourceTrValidator(src_tr string) error {
+	// valid string must not contain  024 special characters
+	if IsReverseValid024(src_tr) {
+		return sdkerrors.Wrapf(
+			ErrInvalid,
+			"string %s must not contain the following characters: '.', '_', '+', '-', '#', '[', ']', '<', '>'",
+			src_tr,
+		)
+	}
+	// HRP must contain only US-ASCII characters with values in the range [33-126]
+	for _, c := range src_tr {
+		if c < 33 || c > 126 {
+			return sdkerrors.Wrapf(
+				ErrInvalid,
+				"string %s must contain the ascii characters between 33 and 126",
+				src_tr,
+			)
+		}
+	}
+
+	return nil
+
+}
+
+func validateBach32IbcPortTranslate(i interface{}) error {
+	if i == nil {
+		return nil
+	}
+	v, ok := i.([]string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if len(v) == 0 {
+		return nil
+	}
+	if len(v) != 2 {
+		return sdkerrors.Wrapf(ErrLimit, "the lenght of the array must be 2 not %d", len(v))
+	}
+	if len(v[0]) != len(v[1]) {
+		return sdkerrors.Wrap(ErrLimit, "the lenght of the elements must be equal")
+	}
+	if err := ics024SourceTrValidator(v[0]); err != nil {
+		return sdkerrors.Wrapf(err, "string %s contains invalid chars", v[0])
+	}
+	if err := ics024TargetTrValidator(v[1]); err != nil {
+		return sdkerrors.Wrapf(err, "string %s contains invalid chars", v[1])
+	}
+	return nil
 }
 
 // ValidateBasic performs basic validation
