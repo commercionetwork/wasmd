@@ -33,6 +33,7 @@ func (k Keeper) OnOpenChannel(
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gas := k.runtimeGasForContract(ctx)
+	gas = 1000000 // TODO: remove this line once we have a better gas estimation
 	res, gasUsed, execErr := k.wasmVM.IBCChannelOpen(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
