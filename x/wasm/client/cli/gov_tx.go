@@ -404,7 +404,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseMigrateContractArgs(args, clientCtx)
+			src, err := parseMigrateContractArgs(args, clientCtx.GetFromAddress().String())
 			if err != nil {
 				return err
 			}
@@ -550,7 +550,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseUpdateContractAdminArgs(args, clientCtx)
+			src, err := parseUpdateContractAdminArgs(args, clientCtx.GetFromAddress().String())
 			if err != nil {
 				return err
 			}
