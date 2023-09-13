@@ -241,7 +241,10 @@ func (m msgServer) UpdateInstantiateConfig(goCtx context.Context, msg *types.Msg
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	caller := sdk.MustAccAddressFromBech32(msg.Sender)
+	caller, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := m.keeper.SetAccessConfig(ctx, msg.CodeID, caller, *msg.NewInstantiatePermission); err != nil {
 		return nil, err
