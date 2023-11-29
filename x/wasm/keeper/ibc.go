@@ -85,6 +85,6 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 	return k.capabilityKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) GetPortIDPrefix() string {
+func GetPortIDPrefix() string {
 	return portIDPrefix
 }

@@ -119,5 +119,5 @@ type IBCContractKeeper interface {
 	// ContractFromPortID resolves contract address from the ibc port-di
 	ContractFromPortID(ctx sdk.Context, portID string) (sdk.AccAddress, error)
 	// GetPortIDPrefix exposes the prefix used for ibc port-id
-	GetPortIDPrefix() string
+	//GetPortIDPrefix() string
 }
