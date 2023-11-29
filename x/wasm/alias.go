@@ -68,9 +68,9 @@ var (
 	TestHandler               = keeper.TestHandler
 	NewWasmProposalHandler    = keeper.NewWasmProposalHandler
 	NewQuerier                = keeper.Querier
-	ContractFromPortID        = keeper.ContractFromPortID
-	WithWasmEngine            = keeper.WithWasmEngine
-	NewCountTXDecorator       = keeper.NewCountTXDecorator
+	//ContractFromPortID        = keeper.ContractFromPortID
+	WithWasmEngine      = keeper.WithWasmEngine
+	NewCountTXDecorator = keeper.NewCountTXDecorator
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc

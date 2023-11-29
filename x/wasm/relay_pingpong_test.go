@@ -66,9 +66,10 @@ func TestPinPong(t *testing.T) {
 	pongContract.chain = chainB
 	pongContract.contractAddr = pongContractAddr
 
+	ctx := sdk.NewContext(chainA.App.CommitMultiStore(), chainA.CurrentHeader, false, nil)
 	var (
-		sourcePortID       = wasmkeeper.PortIDForContract(pingContractAddr)
-		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
+		sourcePortID       = wasmkeeper.DefaultIBCPortNameGenerator{}.PortIDForContract(ctx, pingContractAddr)
+		counterpartyPortID = wasmkeeper.DefaultIBCPortNameGenerator{}.PortIDForContract(ctx, pongContractAddr)
 	)
 
 	path := wasmibctesting.NewPath(chainA, chainB)

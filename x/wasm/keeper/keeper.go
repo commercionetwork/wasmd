@@ -101,6 +101,7 @@ type Keeper struct {
 	maxQueryStackSize    uint32
 	acceptedAccountTypes map[reflect.Type]struct{}
 	accountPruner        AccountPruner
+	ibcPortNameGenerator IBCPortNameGenerator
 }
 
 func (k Keeper) getUploadAccessConfig(ctx sdk.Context) types.AccessConfig {
@@ -313,7 +314,7 @@ func (k Keeper) instantiate(
 	}
 	if report.HasIBCEntryPoints {
 		// register IBC port
-		ibcPort, err := k.ensureIbcPort(ctx, contractAddress)
+		ibcPort, err := k.ensureIBCPort(ctx, contractAddress)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -415,7 +416,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, "requires ibc callbacks")
 	case report.HasIBCEntryPoints && contractInfo.IBCPortID == "":
 		// add ibc port
-		ibcPort, err := k.ensureIbcPort(ctx, contractAddress)
+		ibcPort, err := k.ensureIBCPort(ctx, contractAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -1041,6 +1042,11 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 	k.addToContractCodeSecondaryIndex(ctx, contractAddr, entries[len(entries)-1])
 	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, entries[0].Updated, contractAddr)
 	return k.importContractState(ctx, contractAddr, state)
+}
+
+// ContractFromPortID returns the contract address for given port-id. The method does not check if the contract exists
+func (k Keeper) ContractFromPortID(ctx sdk.Context, portID string) (sdk.AccAddress, error) {
+	return k.ibcPortNameGenerator.ContractFromPortID(ctx, portID)
 }
 
 func (k Keeper) newQueryHandler(ctx sdk.Context, contractAddress sdk.AccAddress) QueryHandler {
